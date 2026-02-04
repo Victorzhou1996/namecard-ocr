@@ -44,20 +44,6 @@
             }
         }
 
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
         .camera-section {
             position: relative;
             margin-bottom: 20px;
@@ -65,9 +51,11 @@
 
         #video {
             width: 100%;
+            max-height: 280px;
             border-radius: 15px;
             background: #000;
             display: block;
+            object-fit: cover;
         }
 
         #canvas {
@@ -76,9 +64,11 @@
 
         #preview {
             width: 100%;
+            max-height: 280px;
             border-radius: 15px;
             display: none;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            object-fit: cover;
         }
 
         .btn-group {
@@ -221,8 +211,9 @@
                 padding: 25px;
             }
 
-            h1 {
-                font-size: 24px;
+            #video,
+            #preview {
+                max-height: 220px;
             }
 
             button {
@@ -245,8 +236,6 @@
 
 <body>
     <div class="container">
-        <h1>📇 名片智能识别</h1>
-        <p class="subtitle">拍摄名片，自动提取信息并保存</p>
 
         <div class="camera-section">
             <video id="video" autoplay playsinline></video>
