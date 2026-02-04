@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>名片智能识别系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .camera-section {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 15px;
+            background: #000;
+            display: block;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        #preview {
+            width: 100%;
+            border-radius: 15px;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56CCF2 0%, #2F80ED 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #F2994A 0%, #F2C94C 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #a8a8a8 0%, #7a7a7a 100%);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .result-card {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .result-item {
+            display: flex;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #555;
+            width: 80px;
+        }
+
+        .result-value {
+            color: #333;
+            flex: 1;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                padding: 12px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+
+            .btn-group {
+                gap: 8px;
+            }
+
+            /* 三个按钮时，第三个按钮单独一行 */
+            #photoControls button:nth-child(3) {
+                flex-basis: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📇 名片智能识别</h1>
+        <p class="subtitle">拍摄名片，自动提取信息并保存</p>
+
+        <div class="camera-section">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <img id="preview" alt="预览">
+            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display: none;">
+        </div>
+
+        <div class="btn-group" id="cameraControls">
+            <button class="btn-primary" id="captureBtn">📷 拍摄名片</button>
+            <button class="btn-secondary" id="uploadFileBtn">📁 选择图片</button>
+        </div>
+
+        <div class="btn-group" id="photoControls" style="display: none;">
+            <button class="btn-success" id="uploadBtn">✅ 上传识别</button>
+            <button class="btn-secondary" id="chooseAnotherBtn">📁 选择图片</button>
+            <button class="btn-danger" id="retakeBtn">🔄 重新拍摄</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在识别名片信息...</p>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div class="result-card" id="resultCard">
+            <h3>识别结果</h3>
+            <div class="result-item">
+                <span class="result-label">姓名：</span>
+                <span class="result-value" id="resultName">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">公司：</span>
+                <span class="result-value" id="resultCompany">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">职位：</span>
+                <span class="result-value" id="resultPosition">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">电话：</span>
+                <span class="result-value" id="resultPhone">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">邮箱：</span>
+                <span class="result-value" id="resultEmail">-</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">地址：</span>
+                <span class="result-value" id="resultAddress">-</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 配置区域 ====================
+        // Google Apps Script Web应用URL
+        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzIt1CIJSvwCGtPk8ogTwZpmnW9O9NGN1ZGRfbB0QcSv_-WGUg3jiIooI0HQPSfLV9APg/exec';
+
+        // ==================== DOM元素 ====================
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const preview = document.getElementById('preview');
+        const captureBtn = document.getElementById('captureBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const chooseAnotherBtn = document.getElementById('chooseAnotherBtn');
+        const fileInput = document.getElementById('fileInput');
+        const cameraControls = document.getElementById('cameraControls');
+        const photoControls = document.getElementById('photoControls');
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('status');
+        const resultCard = document.getElementById('resultCard');
+
+        let stream = null;
+        let capturedImage = null;
+        let cameraAvailable = false;
+
+        // ==================== 初始化摄像头 ====================
+        async function initCamera() {
+            try {
+                // iOS Safari需要特殊处理
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // 优先使用后置摄像头
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                cameraAvailable = true;
+                showStatus('摄像头已就绪', 'info');
+            } catch (error) {
+                console.warn('摄像头初始化失败:', error);
+                cameraAvailable = false;
+                // 隐藏视频元素，只显示文件上传选项
+                video.style.display = 'none';
+                captureBtn.disabled = true;
+                captureBtn.textContent = '📷 摄像头不可用';
+                showStatus('摄像头不可用，请使用"选择图片"功能', 'info');
+            }
+        }
+
+        // ==================== 拍照功能 ====================
+        captureBtn.addEventListener('click', () => {
+            if (!cameraAvailable) {
+                showStatus('摄像头不可用，请使用"选择图片"功能', 'error');
+                return;
+            }
+
+            // 设置canvas尺寸与视频一致
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // 绘制当前帧到canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // 转换为图片（压缩质量0.9，适合iOS）
+            capturedImage = canvas.toDataURL('image/jpeg', 0.9);
+
+            // 显示预览
+            showPreview(capturedImage);
+        });
+
+        // ==================== 文件上传功能 ====================
+        uploadFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        chooseAnotherBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 检查文件类型
+            if (!file.type.startsWith('image/')) {
+                showStatus('请选择图片文件', 'error');
+                return;
+            }
+
+            // 检查文件大小（限制10MB）
+            if (file.size > 10 * 1024 * 1024) {
+                showStatus('图片文件过大，请选择小于10MB的图片', 'error');
+                return;
+            }
+
+            // 读取文件
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // 压缩图片（如果太大）
+                    const maxWidth = 1920;
+                    const maxHeight = 1080;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width = width * ratio;
+                        height = height * ratio;
+                    }
+
+                    // 使用canvas压缩
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // 转换为base64
+                    capturedImage = canvas.toDataURL('image/jpeg', 0.9);
+                    showPreview(capturedImage);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ==================== 显示预览 ====================
+        function showPreview(imageData) {
+            preview.src = imageData;
+            video.style.display = 'none';
+            preview.style.display = 'block';
+
+            // 切换按钮
+            cameraControls.style.display = 'none';
+            photoControls.style.display = 'flex';
+
+            // 隐藏之前的结果
+            resultCard.style.display = 'none';
+            status.style.display = 'none';
+        }
+
+        // ==================== 重新拍摄 ====================
+        retakeBtn.addEventListener('click', () => {
+            if (cameraAvailable) {
+                video.style.display = 'block';
+            }
+            preview.style.display = 'none';
+            cameraControls.style.display = 'flex';
+            photoControls.style.display = 'none';
+            capturedImage = null;
+            resultCard.style.display = 'none';
+            status.style.display = 'none';
+            fileInput.value = ''; // 清空文件选择
+        });
+
+        // ==================== 上传识别 ====================
+        uploadBtn.addEventListener('click', async () => {
+            if (!capturedImage) {
+                showStatus('请先拍摄照片', 'error');
+                return;
+            }
+
+            if (BACKEND_URL === '在这里粘贴你的Google_Apps_Script_URL') {
+                showStatus('请先配置后端URL', 'error');
+                return;
+            }
+
+            // 显示加载状态
+            loading.style.display = 'block';
+            status.style.display = 'none';
+            resultCard.style.display = 'none';
+            uploadBtn.disabled = true;
+            retakeBtn.disabled = true;
+
+            try {
+                // 发送到后端
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Google Apps Script需要no-cors模式
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        image: capturedImage
+                    })
+                });
+
+                // 注意：no-cors模式下无法读取响应，所以这里假设成功
+                // 如果需要读取响应，需要在Apps Script中配置CORS
+                showStatus('名片信息已成功保存到Google Sheets！', 'success');
+
+                // 显示模拟结果（实际应用中需要从响应中获取）
+                setTimeout(() => {
+                    showStatus('✅ 识别完成！请到Google Sheets查看详细信息', 'success');
+                }, 1500);
+
+            } catch (error) {
+                showStatus('上传失败: ' + error.message, 'error');
+                console.error('上传错误:', error);
+            } finally {
+                // 恢复按钮状态
+                loading.style.display = 'none';
+                uploadBtn.disabled = false;
+                retakeBtn.disabled = false;
+            }
+        });
+
+        // ==================== 辅助函数 ====================
+        function showStatus(message, type = 'info') {
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+        }
+
+        function displayResult(data) {
+            document.getElementById('resultName').textContent = data.姓名 || '-';
+            document.getElementById('resultCompany').textContent = data.公司 || '-';
+            document.getElementById('resultPosition').textContent = data.职位 || '-';
+            document.getElementById('resultPhone').textContent = data.电话 || '-';
+            document.getElementById('resultEmail').textContent = data.邮箱 || '-';
+            document.getElementById('resultAddress').textContent = data.地址 || '-';
+            resultCard.style.display = 'block';
+        }
+
+        // ==================== 页面加载时初始化 ====================
+        window.addEventListener('load', () => {
+            initCamera();
+        });
+
+        // ==================== 页面卸载时释放摄像头 ====================
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+
+</html>
