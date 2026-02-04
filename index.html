@@ -44,6 +44,20 @@
             }
         }
 
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
         .camera-section {
             position: relative;
             margin-bottom: 20px;
@@ -211,6 +225,10 @@
                 padding: 25px;
             }
 
+            h1 {
+                font-size: 24px;
+            }
+
             #video,
             #preview {
                 max-height: 220px;
@@ -236,6 +254,8 @@
 
 <body>
     <div class="container">
+        <h1>📇 名片智能识别</h1>
+        <p class="subtitle">拍摄名片，自动提取信息并保存</p>
 
         <div class="camera-section">
             <video id="video" autoplay playsinline></video>
