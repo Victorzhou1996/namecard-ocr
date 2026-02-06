@@ -163,6 +163,44 @@
             border: 1px solid #bee5eb;
         }
 
+        .action-links {
+            margin-top: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .link-btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .link-bitable {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        .link-bitable:hover {
+            background: #dbeafe;
+        }
+
+        .link-logs {
+            background: #fdf2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .link-logs:hover {
+            background: #fee2e2;
+        }
+
         .loading {
             display: none;
             text-align: center;
@@ -282,6 +320,13 @@
 
         <div class="status" id="status"></div>
 
+        <div class="action-links" id="actionLinks">
+            <a href="https://my.feishu.cn/wiki/XA41wjQALiqdT8kOfBicPle0nOf?from=from_copylink" target="_blank"
+                class="link-btn link-bitable">📊 查看飞书多维表格</a>
+            <a href="https://docs.google.com/spreadsheets/d/1EnF8lAoLKG6VPBBT0IlUDOtCm7X7078d0XHqoiFcuBM/edit?gid=59987321#gid=59987321"
+                target="_blank" class="link-btn link-logs">🛠️ 查看调试日志 (Google Sheets)</a>
+        </div>
+
         <div class="result-card" id="resultCard">
             <h3>识别结果</h3>
             <div class="result-item">
@@ -330,6 +375,7 @@
         const photoControls = document.getElementById('photoControls');
         const loading = document.getElementById('loading');
         const status = document.getElementById('status');
+        const actionLinks = document.getElementById('actionLinks');
         const resultCard = document.getElementById('resultCard');
 
         let stream = null;
@@ -455,6 +501,7 @@
             // 隐藏之前的结果
             resultCard.style.display = 'none';
             status.style.display = 'none';
+            actionLinks.style.display = 'none';
         }
 
         // ==================== 重新拍摄 ====================
@@ -468,6 +515,7 @@
             capturedImage = null;
             resultCard.style.display = 'none';
             status.style.display = 'none';
+            actionLinks.style.display = 'none';
             fileInput.value = ''; // 清空文件选择
         });
 
@@ -505,12 +553,13 @@
 
                 // 注意：no-cors模式下无法读取响应，所以这里假设成功
                 // 如果需要读取响应，需要在Apps Script中配置CORS
-                showStatus('名片信息已成功保存到Google Sheets！', 'success');
+                showStatus('名片信息已成功保存到飞书多维表格！', 'success');
 
-                // 显示模拟结果（实际应用中需要从响应中获取）
+                // 显示结果和链接
                 setTimeout(() => {
-                    showStatus('✅ 识别完成！请到Google Sheets查看详细信息', 'success');
-                }, 1500);
+                    showStatus('✅ 识别完成！已同步至飞书库', 'success');
+                    actionLinks.style.display = 'flex';
+                }, 1000);
 
             } catch (error) {
                 showStatus('上传失败: ' + error.message, 'error');
